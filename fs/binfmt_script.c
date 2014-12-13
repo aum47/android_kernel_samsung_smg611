@@ -31,6 +31,13 @@ static int load_script(struct linux_binprm *bprm)
 	 * up now (on the assumption that the interpreter will want to load
 	 * this file).
 	 */
+		
+	/*
+	 * If the script filename will be inaccessible after exec, typically
+	 * because it is a "/dev/fd/<fd>/.." path against an O_CLOEXEC fd, give
+	 * up now (on the assumption that the interpreter will want to load
+	 * this file).
+	 */
 	if (bprm->interp_flags & BINPRM_FLAGS_PATH_INACCESSIBLE)
 		return -ENOENT;
 
