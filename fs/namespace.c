@@ -2431,6 +2431,7 @@ static int do_add_mount(struct mount *newmnt, struct path *path, int mnt_flags)
 		goto unlock;
 
 	err = -EINVAL;
+
 #ifdef CONFIG_RKP_NS_PROT
 	if (d_is_symlink(newmnt->mnt->mnt_root))
 #else
@@ -2444,6 +2445,7 @@ static int do_add_mount(struct mount *newmnt, struct path *path, int mnt_flags)
 	newmnt->mnt.mnt_flags = mnt_flags;
 #endif
 	err = graft_tree(newmnt, parent, mp);
+#endif
 
 unlock:
 	unlock_mount(mp);

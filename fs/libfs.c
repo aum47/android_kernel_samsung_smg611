@@ -331,6 +331,9 @@ int simple_rename(struct inode *old_dir, struct dentry *old_dentry,
 	struct inode *inode = old_dentry->d_inode;
 	int they_are_dirs = d_is_dir(old_dentry);
 
+	if (flags & ~RENAME_NOREPLACE)
+		return -EINVAL;
+
 	if (!simple_empty(new_dentry))
 		return -ENOTEMPTY;
 
