@@ -2060,8 +2060,12 @@ static int graft_tree(struct mount *mnt, struct mount *p, struct mountpoint *mp)
 	if (mnt->mnt.mnt_sb->s_flags & MS_NOUSER)
 		return -EINVAL;
 
-	if (S_ISDIR(mp->m_dentry->d_inode->i_mode) !=
-	      S_ISDIR(mnt->mnt.mnt_root->d_inode->i_mode))
+	if (d_is_dir(mp->m_dentry) !=
+#ifdef CONFIG_RKP_NS_PROT
+	      d_is_dir(mnt->mnt->mnt_root))
+#else
+	      d_is_dir(mnt->mnt.mnt_root))
+#endif
 		return -ENOTDIR;
 
 	return attach_recursive_mnt(mnt, p, mp, NULL);
@@ -2336,8 +2340,8 @@ static int do_move_mount(struct path *path, const char *old_name)
 	if (!mnt_has_parent(old))
 		goto out1;
 
-	if (S_ISDIR(path->dentry->d_inode->i_mode) !=
-	      S_ISDIR(old_path.dentry->d_inode->i_mode))
+	if (d_is_dir(path->dentry) !=
+	      d_is_dir(old_path.dentry))
 		goto out1;
 	/*
 	 * Don't move a mount residing in a shared parent.
@@ -2427,9 +2431,16 @@ static int do_add_mount(struct mount *newmnt, struct path *path, int mnt_flags)
 		goto unlock;
 
 	err = -EINVAL;
-	if (S_ISLNK(newmnt->mnt.mnt_root->d_inode->i_mode))
+#ifdef CONFIG_RKP_NS_PROT
+	if (d_is_symlink(newmnt->mnt->mnt_root))
+#else
+	if (d_is_symlink(newmnt->mnt.mnt_root))
+#endif
 		goto unlock;
 
+#ifdef CONFIG_RKP_NS_PROT
+	rkp_assign_mnt_flags(newmnt->mnt,mnt_flags);
+#else
 	newmnt->mnt.mnt_flags = mnt_flags;
 	err = graft_tree(newmnt, parent, mp);
 

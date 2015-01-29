@@ -379,9 +379,8 @@ static struct dentry *should_expire(struct dentry *dentry,
 		return NULL;
 	}
 
-	if (dentry->d_inode && S_ISLNK(dentry->d_inode->i_mode)) {
-		DPRINTK("checking symlink %p %.*s",
-			dentry, (int)dentry->d_name.len, dentry->d_name.name);
+	if (dentry->d_inode && d_is_symlink(dentry)) {
+		DPRINTK("checking symlink %p %pd", dentry, dentry);
 		/*
 		 * A symlink can't be "busy" in the usual sense so
 		 * just check last used for expire timeout.
