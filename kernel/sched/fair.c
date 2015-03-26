@@ -9280,11 +9280,7 @@ static void run_rebalance_domains(struct softirq_action *h)
 	 * load balance only within the local sched_domain hierarchy
 	 * and abort nohz_idle_balance altogether if we pull some load.
 	 */
-	if (!nohz_idle_balance(this_rq, idle))
-		return;
-
-        /* normal load balance */
-	update_blocked_averages(this_rq->cpu);
+	nohz_idle_balance(this_rq, idle);
 	rebalance_domains(this_rq, idle);
 }
 
