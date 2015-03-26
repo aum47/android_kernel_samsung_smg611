@@ -8566,11 +8566,13 @@ out:
  * In CONFIG_NO_HZ_COMMON case, the idle balance kickee will do the
  * rebalancing for all the cpus for whom scheduler ticks are stopped.
  */
-static void nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle)
+static bool nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle)
 {
 	int this_cpu = this_rq->cpu;
-	struct rq *rq;
 	int balance_cpu;
+	struct rq *rq;
+	bool done = false;
+
 
 	if (idle != CPU_IDLE ||
 	    !test_bit(NOHZ_BALANCE_KICK, nohz_flags(this_cpu)))
@@ -8589,6 +8591,8 @@ static void nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle)
 			break;
 
 		rq = cpu_rq(balance_cpu);
+		if (rq == this_rq)
+			done = true;
 
 		/*
 		 * If time for next balance is due,
@@ -8608,6 +8612,8 @@ static void nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle)
 	nohz.next_balance = this_rq->next_balance;
 end:
 	clear_bit(NOHZ_BALANCE_KICK, nohz_flags(this_cpu));
+
+	return done;
 }
 
 /*
@@ -8687,7 +8693,7 @@ need_kick:
 	return 1;
 }
 #else
-static void nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle) { }
+static bool nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle) { }
 #endif
 
 #ifdef CONFIG_SCHED_HMP
@@ -9240,16 +9246,22 @@ static void run_rebalance_domains(struct softirq_action *h)
 	enum cpu_idle_type idle = this_rq->idle_balance ?
 						CPU_IDLE : CPU_NOT_IDLE;
 
-	rebalance_domains(this_rq, idle);
-
 	hmp_force_up_migration(this_rq->cpu);
 
 	/*
 	 * If this cpu has a pending nohz_balance_kick, then do the
 	 * balancing on behalf of the other idle cpus whose ticks are
-	 * stopped.
+	 * stopped. Do nohz_idle_balance *before* rebalance_domains to
+	 * give the idle cpus a chance to load balance. Else we may
+	 * load balance only within the local sched_domain hierarchy
+	 * and abort nohz_idle_balance altogether if we pull some load.
 	 */
-	nohz_idle_balance(this_rq, idle);
+	if (!nohz_idle_balance(this_rq, idle))
+		return;
+
+        /* normal load balance */
+	update_blocked_averages(this_rq->cpu);
+	rebalance_domains(this_rq, idle);
 }
 
 /*
