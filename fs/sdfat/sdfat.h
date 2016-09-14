@@ -241,6 +241,31 @@ struct sdfat_inode_info {
 	struct inode vfs_inode;
 };
 
+<<<<<<< HEAD
+=======
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0)
+typedef struct timespec64	sdfat_timespec_t;
+#else /* LINUX_VERSION_CODE < KERNEL_VERSION(4, 18, 0) */
+typedef struct timespec		sdfat_timespec_t;
+#endif
+
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
+
+#else /* LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0) */
+/*
+ * sb->s_flags.  Note that these mirror the equivalent MS_* flags where
+ * represented in both.
+ */
+#define SB_RDONLY	1	/* Mount read-only */
+#define SB_NODIRATIME	2048	/* Do not update directory access times */
+static inline bool sb_rdonly(const struct super_block *sb)
+{
+	return sb->s_flags & MS_RDONLY;
+}
+#endif
+
+>>>>>>> 2ae270cde6b0 (vfs: Add current_time() api)
 /*
  * FIXME : needs on-disk-slot in-memory data
  */
