@@ -7,6 +7,7 @@
  */
 
 #include <linux/lcd.h>
+#include <linux/display_state.h>
 #include <linux/backlight.h>
 #include <linux/of_device.h>
 #include <linux/i2c.h>
@@ -25,6 +26,16 @@
 #include "mdnie.h"
 #include "mdnie_lite_table_on7xe.h"
 #endif
+
+#define PANEL_STATE_SUSPENED	0
+#define PANEL_STATE_RESUMED	1
+#define PANEL_STATE_SUSPENDING	2
+
+bool display_on = true;
+bool is_display_on()
+{
+	return display_on;
+}
 
 #define TD4300_ID_REG			0xDA	/* LCD ID1,ID2,ID3 */
 #define TD4300_ID_LEN			3
@@ -728,6 +739,7 @@ static int dsim_panel_displayon(struct dsim_device *dsim)
 
 	mutex_lock(&lcd->lock);
 	lcd->state = PANEL_STATE_RESUMED;
+	display_on = true;
 	mutex_unlock(&lcd->lock);
 
 	dev_info(&lcd->ld->dev, "- %s: %d, %d\n", __func__, lcd->state, lcd->connected);
@@ -746,6 +758,7 @@ static int dsim_panel_suspend(struct dsim_device *dsim)
 
 	mutex_lock(&lcd->lock);
 	lcd->state = PANEL_STATE_SUSPENDING;
+	display_on = false;
 	mutex_unlock(&lcd->lock);
 
 	td4300_exit(lcd);
