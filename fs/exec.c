@@ -1833,7 +1833,6 @@ static int compat_do_execveat(int fd, struct filename *filename,
 		.ptr.compat = __envp,
 	};
 	return do_execveat_common(fd, filename, argv, envp, flags);
->>>>>>> cc4dee0fabf (syscalls: implement execveat() system call)
 }
 #endif
 
