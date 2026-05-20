@@ -1814,12 +1814,9 @@ static int compat_do_execve(struct filename *filename,
 		.is_compat = true,
 		.ptr.compat = __envp,
 	};
-<<<<<<< HEAD
 #ifdef CONFIG_KSU_MANUAL_HOOK // 32-bit ksud and 32-on-64 support
 	ksu_handle_execveat((int *)AT_FDCWD, &filename, &argv, &envp, 0);
 #endif
-	return do_execve_common(filename, argv, envp);
-=======
 	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
 }
 
