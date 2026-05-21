@@ -2405,6 +2405,7 @@ static int do_add_mount(struct mount *newmnt, struct path *path, int mnt_flags)
 	rkp_assign_mnt_flags(newmnt->mnt,mnt_flags);
 #else
 	newmnt->mnt.mnt_flags = mnt_flags;
+#endif
 	err = graft_tree(newmnt, parent, mp);
 
 unlock:
