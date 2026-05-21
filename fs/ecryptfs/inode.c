@@ -1342,7 +1342,7 @@ static int ecryptfs_setattr(struct dentry *dentry, struct iattr *ia)
 	lower_inode = ecryptfs_inode_to_lower(inode);
 	lower_dentry = ecryptfs_dentry_to_lower(dentry);
 	mutex_lock(&crypt_stat->cs_mutex);
-	if (S_ISDIR(dentry->d_inode->i_mode))
+	if (d_is_dir(dentry))
 		crypt_stat->flags &= ~(ECRYPTFS_ENCRYPTED);
 	else if (S_ISREG(dentry->d_inode->i_mode)
 		 && (!(crypt_stat->flags & ECRYPTFS_POLICY_APPLIED)

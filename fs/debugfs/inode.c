@@ -481,7 +481,7 @@ static int __debugfs_remove(struct dentry *dentry, struct dentry *parent)
 
 	if (debugfs_positive(dentry)) {
 		dget(dentry);
-		if (S_ISDIR(dentry->d_inode->i_mode))
+		if (d_is_dir(dentry))
 			ret = simple_rmdir(parent->d_inode, dentry);
 		else
 			simple_unlink(parent->d_inode, dentry);
@@ -649,8 +649,8 @@ struct dentry *debugfs_rename(struct dentry *old_dir, struct dentry *old_dentry,
 		goto exit;
 	}
 	d_move(old_dentry, dentry);
-	fsnotify_move(d_inode(old_dir), d_inode(new_dir), old_name.name,
-		S_ISDIR(old_dentry->d_inode->i_mode),
+	fsnotify_move(old_dir->d_inode, new_dir->d_inode, old_name.name,
+		d_is_dir(old_dentry),
 		NULL, old_dentry);
 	release_dentry_name_snapshot(&old_name);
 	unlock_rename(new_dir, old_dir);
