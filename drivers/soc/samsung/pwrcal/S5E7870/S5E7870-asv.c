@@ -710,7 +710,7 @@ static int dfscpu_set_ema(unsigned int volt)
 
 static int dvfsg3d_get_asv_table(unsigned int *table)
 {
-	int max_lv;
+	int lv, max_lv;
 
 	max_lv = asv_dvfs_g3d->table->num_of_lv;
     
