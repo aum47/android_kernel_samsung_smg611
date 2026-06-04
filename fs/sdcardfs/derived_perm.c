@@ -65,6 +65,7 @@ void get_derived_permission_new(struct dentry *parent, struct dentry *dentry,
 	struct qstr q_obb = QSTR_LITERAL("obb");
 	struct qstr q_media = QSTR_LITERAL("media");
 	struct qstr q_cache = QSTR_LITERAL("cache");
+	struct qstr q_sandbox = QSTR_LITERAL("sandbox");
 
 	/* By default, each inode inherits from its parent.
 	 * the properties are maintained on its private fields
@@ -110,7 +111,6 @@ void get_derived_permission_new(struct dentry *parent, struct dentry *dentry,
 		if (qstr_case_eq(name, &q_data)) {
 			/* App-specific directories inside; let anyone traverse */
 			info->data->perm = PERM_ANDROID_DATA;
-			set_top(info, info->data);
 		} else if (qstr_case_eq(name, &q_sandbox)) {
 			/* App-specific directories inside; let anyone traverse */
 			info->data->perm = PERM_ANDROID_DATA;
