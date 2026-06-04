@@ -227,8 +227,15 @@ struct sdcardfs_name_data {
 	bool found;
 };
 
+static inline int qstr_n_case_eq(const struct qstr *a, const struct qstr *b)
+{
+	if (a->len != b->len)
+		return 0;
+	return !strncasecmp(a->name, b->name, a->len);
+}
+
 static int sdcardfs_name_match(void *__buf, const char *name, int namelen,
-		loff_t offset, u64 ino, unsigned int d_type)
+							   loff_t offset, u64 ino, unsigned int d_type)
 {
 	struct sdcardfs_name_data *buf = (struct sdcardfs_name_data *) __buf;
 	struct qstr candidate = QSTR_INIT(name, namelen);
