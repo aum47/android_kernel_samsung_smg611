@@ -1,4 +1,4 @@
-// /*
+/*
  * fs/sdcardfs/main.c
  *
  * Copyright (c) 2013 Samsung Electronics Co. Ltd
