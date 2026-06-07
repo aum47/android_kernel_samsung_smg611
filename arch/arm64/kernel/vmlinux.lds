@@ -466,6 +466,7 @@
  * PAGE_OFFSET - the virtual address of the start of the kernel image (top
  *		 (VA_BITS - 1))
  * VA_BITS - the maximum number of bits for virtual addresses.
+ * VA_START - the first kernel virtual address.
  * TASK_SIZE - the maximum size of a user space task.
  * TASK_UNMAPPED_BASE - the lower boundary of the mmap VM area.
  * The module space lives between the addresses given by TASK_SIZE
@@ -709,7 +710,7 @@ SECTIONS
   *(.discard)
   *(.discard.*)
  }
- . = (0xffffffffffffffff << ((39) - 1)) + 0x00080000;
+ . = (0xffffffffffffffff - (1 << ((39) - 1)) + 1) + 0x00080000;
  .head.text : {
   _text = .;
   *(.head.text)
@@ -792,4 +793,4 @@ ASSERT(((__hyp_idmap_text_start + (1 << 12)) > __hyp_idmap_text_end),
 /*
  * If padding is applied before .head.text, virt<->phys conversions will fail.
  */
-ASSERT(_text == ((0xffffffffffffffff << ((39) - 1)) + 0x00080000), "HEAD is misaligned")
+ASSERT(_text == ((0xffffffffffffffff - (1 << ((39) - 1)) + 1) + 0x00080000), "HEAD is misaligned")
