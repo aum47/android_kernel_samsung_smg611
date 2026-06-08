@@ -264,6 +264,7 @@ static int sdcardfs_read_super(struct vfsmount *mnt, struct super_block *sb,
 
 	pr_info("sdcardfs: dev_name -> %s\n", dev_name);
 	pr_info("sdcardfs: options -> %s\n", (char *)raw_data);
+	pr_info("sdcardfs: mnt -> %pK\n", mnt);
 
 	/* parse lower path */
 	err = kern_path(dev_name, LOOKUP_FOLLOW | LOOKUP_DIRECTORY,
@@ -293,6 +294,13 @@ static int sdcardfs_read_super(struct vfsmount *mnt, struct super_block *sb,
 	lower_sb = lower_path.dentry->d_sb;
 	atomic_inc(&lower_sb->s_active);
 	sdcardfs_set_lower_super(sb, lower_sb);
+
+	sb->s_stack_depth = lower_sb->s_stack_depth + 1;
+	if (sb->s_stack_depth > FILESYSTEM_MAX_STACK_DEPTH) {
+		pr_err("sdcardfs: maximum fs stacking depth exceeded\n");
+		err = -EINVAL;
+		goto out_sput;
+	}
 
 	/* inherit maxbytes from lower file system */
 	sb->s_maxbytes = lower_sb->s_maxbytes;
@@ -340,13 +348,11 @@ static int sdcardfs_read_super(struct vfsmount *mnt, struct super_block *sb,
 	mutex_lock(&sdcardfs_super_list_lock);
 	if (sb_info->options.multiuser) {
 		setup_derived_state(sb->s_root->d_inode, PERM_PRE_ROOT,
-				sb_info->options.fs_user_id, AID_ROOT,
-				false, SDCARDFS_I(sb->s_root->d_inode)->data);
+				sb_info->options.fs_user_id, AID_ROOT);
 		snprintf(sb_info->obbpath_s, PATH_MAX, "%s/obb", dev_name);
 	} else {
 		setup_derived_state(sb->s_root->d_inode, PERM_ROOT,
-				sb_info->options.fs_user_id, AID_ROOT,
-				false, SDCARDFS_I(sb->s_root->d_inode)->data);
+				sb_info->options.fs_user_id, AID_ROOT);
 		snprintf(sb_info->obbpath_s, PATH_MAX, "%s/Android/obb", dev_name);
 	}
 	fixup_tmp_permissions(sb->s_root->d_inode);
