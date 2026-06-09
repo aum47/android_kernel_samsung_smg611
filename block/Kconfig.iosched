@@ -74,8 +74,6 @@ choice
 	config DEFAULT_NOOP
 		bool "No-op"
 
-<<<<<<< HEAD
-=======
 	config DEFAULT_ROW
 		bool "ROW" if IOSCHED_ROW=y
 		help
@@ -96,7 +94,6 @@ choice
 		  any workload. It also tries to guarantee low latency to
 		  interactive and soft real-time applications.
 
->>>>>>> 878759ab3... block: BFQ scheduling algorithm
 endchoice
 
 config DEFAULT_IOSCHED
@@ -104,12 +101,8 @@ config DEFAULT_IOSCHED
 	default "deadline" if DEFAULT_DEADLINE
 	default "cfq" if DEFAULT_CFQ
 	default "noop" if DEFAULT_NOOP
-<<<<<<< HEAD
-
-=======
 	default "row" if DEFAULT_ROW
 	default "bfq" if DEFAULT_BFQ
->>>>>>> 878759ab3... block: BFQ scheduling algorithm
 endmenu
 
 endif
