@@ -60,8 +60,8 @@
  * (to see the precise effective timeslice length of your workload,
  *  run vmstat and monitor the context-switches (cs) field)
  */
-unsigned int sysctl_sched_latency = 6000000ULL;
-unsigned int normalized_sysctl_sched_latency = 6000000ULL;
+unsigned int sysctl_sched_latency = 10000000ULL;
+unsigned int normalized_sysctl_sched_latency = 10000000ULL;
 
 /*
  * The initial- and re-scaling of tunables is configurable
@@ -73,14 +73,14 @@ unsigned int normalized_sysctl_sched_latency = 6000000ULL;
  * SCHED_TUNABLESCALING_LINEAR - scaled linear, *ncpus
  */
 enum sched_tunable_scaling sysctl_sched_tunable_scaling
-	= SCHED_TUNABLESCALING_LOG;
+	= SCHED_TUNABLESCALING_NONE;
 
 /*
  * Minimal preemption granularity for CPU-bound tasks:
  * (default: 0.75 msec * (1 + ilog(ncpus)), units: nanoseconds)
  */
-unsigned int sysctl_sched_min_granularity = 750000ULL;
-unsigned int normalized_sysctl_sched_min_granularity = 750000ULL;
+unsigned int sysctl_sched_min_granularity = 1250000ULL;
+unsigned int normalized_sysctl_sched_min_granularity = 1250000ULL;
 
 /*
  * is kept at sysctl_sched_latency / sysctl_sched_min_granularity
@@ -8536,7 +8536,20 @@ out:
 	 * When the cpu is attached to null domain for ex, it will not be
 	 * updated.
 	 */
-	if (likely(update_next_balance))
+	if (likely(update_next_balance)) {
+
+		/*
+		 * If this cpu has been elected to perform the nohz idle
+		 * balance. Other idle cpus have already rebalance with
+		 * nohz_idle_balance and the nohz.next_balaance has been
+		 * updated accordingly. This cpu has now run the idle load
+		 * balance for itself and we need to update the
+		 * nohz.next_balance accordingly.
+		 */
+		if ((idle == CPU_IDLE) &&
+			time_after(nohz.next_balance, rq->next_balance))
+				nohz.next_balance = rq->next_balance;
+	}
 		rq->next_balance = next_balance;
 }
 
@@ -8545,11 +8558,16 @@ out:
  * In CONFIG_NO_HZ_COMMON case, the idle balance kickee will do the
  * rebalancing for all the cpus for whom scheduler ticks are stopped.
  */
-static void nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle)
+static bool nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle)
 {
 	int this_cpu = this_rq->cpu;
-	struct rq *rq;
 	int balance_cpu;
+	struct rq *rq;
+	/* Earliest time when we have to do rebalance again */
+	unsigned long next_balance = jiffies + 60*HZ;
+	int update_next_balance = 0;
+	bool done = false;
+
 
 	if (idle != CPU_IDLE ||
 	    !test_bit(NOHZ_BALANCE_KICK, nohz_flags(this_cpu)))
@@ -8568,6 +8586,8 @@ static void nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle)
 			break;
 
 		rq = cpu_rq(balance_cpu);
+		if (rq == this_rq)
+			done = true;
 
 		/*
 		 * If time for next balance is due,
@@ -8581,12 +8601,22 @@ static void nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle)
 			rebalance_domains(rq, CPU_IDLE);
 		}
 
-		if (time_after(this_rq->next_balance, rq->next_balance))
-			this_rq->next_balance = rq->next_balance;
+		if (time_after(next_balance, rq->next_balance)) {
+			next_balance = rq->next_balance;
+			update_next_balance = 1;
+		}
 	}
-	nohz.next_balance = this_rq->next_balance;
+	/*
+	 * next_balance will be updated only when there is a need.
+	 * When the cpu is attached to null domain for ex, it will not be
+	 * updated.
+	 */
+	if (likely(update_next_balance))
+		nohz.next_balance = next_balance;
 end:
 	clear_bit(NOHZ_BALANCE_KICK, nohz_flags(this_cpu));
+
+	return done;
 }
 
 /*
@@ -8666,7 +8696,7 @@ need_kick:
 	return 1;
 }
 #else
-static void nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle) { }
+static bool nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle) { }
 #endif
 
 #ifdef CONFIG_SCHED_HMP
@@ -9219,16 +9249,22 @@ static void run_rebalance_domains(struct softirq_action *h)
 	enum cpu_idle_type idle = this_rq->idle_balance ?
 						CPU_IDLE : CPU_NOT_IDLE;
 
-	rebalance_domains(this_rq, idle);
-
 	hmp_force_up_migration(this_rq->cpu);
 
 	/*
 	 * If this cpu has a pending nohz_balance_kick, then do the
 	 * balancing on behalf of the other idle cpus whose ticks are
-	 * stopped.
+	 * stopped. Do nohz_idle_balance *before* rebalance_domains to
+	 * give the idle cpus a chance to load balance. Else we may
+	 * load balance only within the local sched_domain hierarchy
+	 * and abort nohz_idle_balance altogether if we pull some load.
 	 */
-	nohz_idle_balance(this_rq, idle);
+	if (!nohz_idle_balance(this_rq, idle))
+		return;
+
+        /* normal load balance */
+	update_blocked_averages(this_rq->cpu);
+	rebalance_domains(this_rq, idle);
 }
 
 /*
