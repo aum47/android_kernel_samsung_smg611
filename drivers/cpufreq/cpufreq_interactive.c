@@ -900,7 +900,7 @@ static ssize_t store_min_sample_time(struct cpufreq_interactive_tunables
 static ssize_t show_timer_rate(struct cpufreq_interactive_tunables *tunables,
 		char *buf)
 {
-	return sprintf(buf, "%lu\n", jiffies_to_usecs(tunables->timer_rate));
+	return sprintf(buf, "%u\n", jiffies_to_usecs(tunables->timer_rate));
 }
 
 static ssize_t store_timer_rate(struct cpufreq_interactive_tunables *tunables,
