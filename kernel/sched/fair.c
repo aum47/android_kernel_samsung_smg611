@@ -6576,6 +6576,12 @@ static int detach_tasks(struct lb_env *env)
 		return 0;
 
 	while (!list_empty(tasks)) {
+		/*
+		 * We don't want to steal all, otherwise we may be treated likewise,
+		 * which could at worst lead to a livelock crash.
+		 */
+		if (env->idle != CPU_NOT_IDLE && env->src_rq->nr_running <= 1)
+			break;
 		p = list_first_entry(tasks, struct task_struct, se.group_node);
 
 		env->loop++;
@@ -9259,11 +9265,7 @@ static void run_rebalance_domains(struct softirq_action *h)
 	 * load balance only within the local sched_domain hierarchy
 	 * and abort nohz_idle_balance altogether if we pull some load.
 	 */
-	if (!nohz_idle_balance(this_rq, idle))
-		return;
-
-        /* normal load balance */
-	update_blocked_averages(this_rq->cpu);
+	nohz_idle_balance(this_rq, idle);
 	rebalance_domains(this_rq, idle);
 }
 
