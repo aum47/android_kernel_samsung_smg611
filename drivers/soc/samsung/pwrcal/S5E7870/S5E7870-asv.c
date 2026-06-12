@@ -357,8 +357,8 @@ static void asv_set_freq_limit(void)
 notfused:
 
 #ifdef PWRCAL_TARGET_LINUX
-	asv_dvfs_cpucl0->table->max_freq = 1690000;
-	asv_dvfs_cpucl1->table->max_freq = 1690000;
+	asv_dvfs_cpucl0->table->max_freq = 1586000;
+	asv_dvfs_cpucl1->table->max_freq = 1586000;
 	asv_dvfs_g3d->table->max_freq = 1246000;
 	asv_dvfs_mif->table->max_freq = 900000;
 #endif
@@ -636,8 +636,8 @@ static int dvfscpucl0_get_asv_table(unsigned int *table)
 	Define Needed Voltages manually */
 	table[0] = 1200000;
 	table[1] = 1375000;
-	table[2] = 1000000;
-	table[3] = 975000;
+	table[2] = 1150000;
+	table[3] = 1000000;
 	table[4] = 950000;
 	table[5] = 900000;
 	table[6] = 850000;
@@ -668,8 +668,8 @@ static int dvfscpucl1_get_asv_table(unsigned int *table)
 	Define Needed Voltages manually */
 	table[0] = 1200000;
 	table[1] = 1325000;
-	table[2] = 1000000;
-	table[3] = 975000;
+	table[2] = 1150000;
+	table[3] = 1000000;
 	table[4] = 950000;
 	table[5] = 900000;
 	table[6] = 850000;
@@ -710,22 +710,12 @@ static int dfscpu_set_ema(unsigned int volt)
 
 static int dvfsg3d_get_asv_table(unsigned int *table)
 {
-	int max_lv;
+	int lv, max_lv;
 
 	max_lv = asv_dvfs_g3d->table->num_of_lv;
 
-    /* G3D Voltage Override
-	Define Needed Voltages manually */
-	table[0] = 1262500; // 1300MHz
-	table[1] = 962400; // 1246MHz
-	table[2] = 931200; // 1146MHz
-	table[3] = 931200;  // 1001MHz
-	table[4] = 837500;  // 845MHz
-	table[5] = 662500;  // 728MHz
-	table[6] = 643200;  // 676MHz
-	table[7] = 580000;  // 545MHz
-	table[8] = 537500;  // 450MHz
-	table[9] = 500000;  // 343MHz
+	for (lv = 0; lv < max_lv; lv++)
+		table[lv] = get_asv_voltage(cal_asv_dvfs_g3d, lv);
 
 	return max_lv;
 }
