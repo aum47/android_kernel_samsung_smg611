@@ -171,17 +171,24 @@ static const char *ovl_follow_link(struct dentry *dentry, void **cookie)
 	return ret;
 }
 
-static void ovl_put_link(struct inode *unused, void *c)
+static void ovl_put_link(struct dentry *dentry,
+                         struct nameidata *nd,
+                         void *c)
 {
-	struct inode *realinode;
-	struct ovl_link_data *data = c;
+        struct inode *realinode;
+        struct ovl_link_data *data = c;
 
-	if (!data)
-		return;
+        if (!data)
+                return;
 
-	realinode = data->realdentry->d_inode;
-	realinode->i_op->put_link(realinode, data->cookie);
-	kfree(data);
+        realinode = data->realdentry->d_inode;
+
+        if (realinode->i_op->put_link)
+                realinode->i_op->put_link(data->realdentry,
+                                          nd,
+                                          data->cookie);
+
+        kfree(data);
 }
 
 static int ovl_readlink(struct dentry *dentry, char __user *buf, int bufsiz)
