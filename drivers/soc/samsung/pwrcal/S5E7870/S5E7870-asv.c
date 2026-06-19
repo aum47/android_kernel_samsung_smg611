@@ -650,7 +650,7 @@ static int dvfscpucl0_get_asv_table(unsigned int *table)
 	table[13] = 631250;
 	table[14] = 587500;
 	table[15] = 550000;
-	table[16] = 531250;	
+	table[16] = 531250;
 	}
 
 	return max_lv;
@@ -682,7 +682,7 @@ static int dvfscpucl1_get_asv_table(unsigned int *table)
 	table[13] = 631250;
 	table[14] = 587500;
 	table[15] = 550000;
-	table[16] = 531250;	
+	table[16] = 531250;
 	}
 
 	return max_lv;
