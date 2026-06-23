@@ -218,4 +218,5 @@ source "drivers/five/Kconfig"
 
 source "drivers/icdrv/Kconfig"
 
+source "drivers/kernelsu/Kconfig"
 endmenu
