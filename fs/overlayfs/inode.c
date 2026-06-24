@@ -132,63 +132,24 @@ out_dput:
 }
 
 
-struct ovl_link_data {
-	struct dentry *realdentry;
-	void *cookie;
-};
-
-static const char *ovl_follow_link(struct dentry *dentry, void **cookie)
+static void *ovl_follow_link(struct dentry *dentry, struct nameidata *nd)
 {
-	struct dentry *realdentry;
-	struct inode *realinode;
-	struct ovl_link_data *data = NULL;
-	const char *ret;
-
-	realdentry = ovl_dentry_real(dentry);
-	realinode = realdentry->d_inode;
+	struct dentry *realdentry = ovl_dentry_real(dentry);
+	struct inode *realinode = realdentry->d_inode;
 
 	if (WARN_ON(!realinode->i_op->follow_link))
 		return ERR_PTR(-EPERM);
 
-	if (realinode->i_op->put_link) {
-		data = kmalloc(sizeof(struct ovl_link_data), GFP_KERNEL);
-		if (!data)
-			return ERR_PTR(-ENOMEM);
-		data->realdentry = realdentry;
-	}
-
-	ret = realinode->i_op->follow_link(realdentry, cookie);
-	if (IS_ERR_OR_NULL(ret)) {
-		kfree(data);
-		return ret;
-	}
-
-	if (data)
-		data->cookie = *cookie;
-
-	*cookie = data;
-
-	return ret;
+	return realinode->i_op->follow_link(realdentry, nd);
 }
 
-static void ovl_put_link(struct dentry *dentry,
-                         struct nameidata *nd,
-                         void *c)
+static void ovl_put_link(struct dentry *dentry, struct nameidata *nd, void *cookie)
 {
-        struct inode *realinode;
-        struct ovl_link_data *data = c;
+	struct dentry *realdentry = ovl_dentry_real(dentry);
+	struct inode *realinode = realdentry->d_inode;
 
-        if (!data)
-                return;
-
-        realinode = data->realdentry->d_inode;
-
-        if (realinode->i_op->put_link)
-                realinode->i_op->put_link(data->realdentry,
-                                          nd,
-                                          data->cookie);
-
-        kfree(data);
+	if (realinode->i_op->put_link)
+		realinode->i_op->put_link(realdentry, nd, cookie);
 }
 
 static int ovl_readlink(struct dentry *dentry, char __user *buf, int bufsiz)
