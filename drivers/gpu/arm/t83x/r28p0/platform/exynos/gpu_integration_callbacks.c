@@ -27,6 +27,10 @@
 #include <mali_kbase_gpu_memory_debugfs.h>
 #include <backend/gpu/mali_kbase_device_internal.h>
 
+#ifndef MALI_SEC_PROBE_TEST
+#define MALI_SEC_PROBE_TEST 0
+#endif
+
 #if MALI_SEC_PROBE_TEST != 1
 #include <platform/exynos/gpu_integration_defs.h>
 #endif
