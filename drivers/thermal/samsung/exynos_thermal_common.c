@@ -34,14 +34,8 @@
 #include "exynos_thermal_common.h"
 
 #if defined(CONFIG_GPU_THERMAL)
-int gpu_dvfs_get_max_freq(void)
-{
-	return gpu_dvfs_get_clock(0);
-}
-int gpu_dvfs_get_min_freq(void)
-{
-	return gpu_dvfs_get_clock(gpu_dvfs_get_step());
-}
+extern int gpu_dvfs_get_max_freq(void);
+extern int gpu_dvfs_get_min_freq(void);
 #endif
 
 unsigned long cpu_max_temp[2];
