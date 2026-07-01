@@ -2445,7 +2445,6 @@ static int do_add_mount(struct mount *newmnt, struct path *path, int mnt_flags)
 	newmnt->mnt.mnt_flags = mnt_flags;
 #endif
 	err = graft_tree(newmnt, parent, mp);
-#endif
 
 unlock:
 	unlock_mount(mp);
