@@ -289,7 +289,7 @@ uart_error_cnt_show(struct device *dev, struct device_attribute *attr, char *buf
 	return ret;
 }
 
-static DEVICE_ATTR(error_cnt, 0664, uart_error_cnt_show, NULL);
+static DEVICE_ATTR(error_cnt, S_IRUGO, uart_error_cnt_show, NULL);
 
 static void s3c24xx_serial_resetport(struct uart_port *port,
 				   struct s3c2410_uartcfg *cfg);

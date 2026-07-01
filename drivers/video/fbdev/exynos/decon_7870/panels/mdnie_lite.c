@@ -516,11 +516,7 @@ static ssize_t sensorRGB_store(struct device *dev,
 	if (ret < 0)
 		return ret;
 
-	if (mdnie->enable
-		&& mdnie->accessibility == ACCESSIBILITY_OFF
-		&& !mdnie->ldu
-		&& mdnie->mode == AUTO
-		&& (mdnie->scenario == BROWSER_MODE || mdnie->scenario == EBOOK_MODE)) {
+	if (mdnie->enable) {
 		dev_info(dev, "%s: %d, %d, %d\n", __func__, white_r, white_g, white_b);
 
 		table = mdnie_find_table(mdnie);
@@ -534,6 +530,10 @@ static ssize_t sensorRGB_store(struct device *dev,
 		mdnie->table_buffer.seq[scr_info->index].cmd[scr_info->wb] = mdnie->wrgb_current.b = (unsigned char)white_b;
 
 		mdnie_update_sequence(mdnie, &mdnie->table_buffer);
+
+		table->seq[scr_info->index].cmd[scr_info->wr] = (unsigned char)white_r;
+		table->seq[scr_info->index].cmd[scr_info->wg] = (unsigned char)white_g;
+		table->seq[scr_info->index].cmd[scr_info->wb] = (unsigned char)white_b; 	
 	}
 
 	return count;
@@ -849,7 +849,7 @@ static DEVICE_ATTR(accessibility, 0664, accessibility_show, accessibility_store)
 static DEVICE_ATTR(color_correct, 0444, color_correct_show, NULL);
 static DEVICE_ATTR(color_coordinate, 0000, color_coordinate_show, color_coordinate_store);
 static DEVICE_ATTR(bypass, 0664, bypass_show, bypass_store);
-static DEVICE_ATTR(lux, 0000, lux_show, lux_store);
+static DEVICE_ATTR(lux, 0664, lux_show, lux_store);
 static DEVICE_ATTR(sensorRGB, 0664, sensorRGB_show, sensorRGB_store);
 static DEVICE_ATTR(whiteRGB, 0664, whiteRGB_show, whiteRGB_store);
 static DEVICE_ATTR(night_mode, 0664, night_mode_show, night_mode_store);

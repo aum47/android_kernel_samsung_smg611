@@ -79,11 +79,15 @@ struct cpufreq_policy {
 					 * governors are used */
 	unsigned int		restore_freq; /* = policy->cur before transition */
 	unsigned int		suspend_freq; /* freq to set during suspend */
+	unsigned int		util;	/* CPU utilization at max frequency */
+	unsigned int		load_at_max;  /* CPU utilization at max frequency */
 
 	unsigned int		policy; /* see above */
 	struct cpufreq_governor	*governor; /* see below */
 	void			*governor_data;
 	bool			governor_enabled; /* governor start/stop flag */
+
+	unsigned int		hcpus_count; /* number of core to be offed */
 
 	struct work_struct	update; /* if update_policy() needs to be
 					 * called, but you're in IRQ context */
@@ -160,6 +164,7 @@ u64 get_cpu_idle_time(unsigned int cpu, u64 *wall, int io_busy);
 int cpufreq_get_policy(struct cpufreq_policy *policy, unsigned int cpu);
 int cpufreq_update_policy(unsigned int cpu);
 bool have_governor_per_policy(void);
+bool cpufreq_driver_is_slow(void);
 struct kobject *get_governor_parent_kobj(struct cpufreq_policy *policy);
 #else
 static inline unsigned int cpufreq_get(unsigned int cpu)
@@ -271,6 +276,10 @@ struct cpufreq_driver {
 	void	(*stop_cpu)	(struct cpufreq_policy *policy);
 	int	(*suspend)	(struct cpufreq_policy *policy);
 	int	(*resume)	(struct cpufreq_policy *policy);
+
+	/* Will be called after the driver is fully initialized */
+	void		(*ready)(struct cpufreq_policy *policy);
+
 	struct freq_attr	**attr;
 
 	/* platform specific boost support code */
@@ -312,6 +321,14 @@ struct cpufreq_driver {
  * issuing a BUG_ON().
  */
 #define CPUFREQ_NEED_INITIAL_FREQ_CHECK	(1 << 5)
+
+/*
+ * Indicates that it is safe to call cpufreq_driver_target from
+ * non-interruptable context in scheduler hot paths.  Drivers must
+ * opt-in to this flag, as the safe default is that they might sleep
+ * or be too slow for hot path use.
+ */
+#define CPUFREQ_DRIVER_FAST		(1 << 6)
 
 int cpufreq_register_driver(struct cpufreq_driver *driver_data);
 int cpufreq_unregister_driver(struct cpufreq_driver *driver_data);
@@ -357,6 +374,7 @@ static inline void cpufreq_resume(void) {}
 
 #define CPUFREQ_TRANSITION_NOTIFIER	(0)
 #define CPUFREQ_POLICY_NOTIFIER		(1)
+#define CPUFREQ_GOVINFO_NOTIFIER	(2)
 
 /* Transition notifiers */
 #define CPUFREQ_PRECHANGE		(0)
@@ -371,6 +389,9 @@ static inline void cpufreq_resume(void) {}
 #define CPUFREQ_CREATE_POLICY		(5)
 #define CPUFREQ_REMOVE_POLICY		(6)
 
+/* Govinfo Notifiers */
+#define CPUFREQ_LOAD_CHANGE		(0)
+
 #ifdef CONFIG_CPU_FREQ
 int cpufreq_register_notifier(struct notifier_block *nb, unsigned int list);
 int cpufreq_unregister_notifier(struct notifier_block *nb, unsigned int list);
@@ -379,6 +400,13 @@ void cpufreq_freq_transition_begin(struct cpufreq_policy *policy,
 		struct cpufreq_freqs *freqs);
 void cpufreq_freq_transition_end(struct cpufreq_policy *policy,
 		struct cpufreq_freqs *freqs, int transition_failed);
+/*
+ * Governor specific info that can be passed to modules that subscribe
+ * to CPUFREQ_GOVINFO_NOTIFIER
+ */
+
+void cpufreq_notify_utilization(struct cpufreq_policy *policy,
+		unsigned int load);
 
 #else /* CONFIG_CPU_FREQ */
 static inline int cpufreq_register_notifier(struct notifier_block *nb,
@@ -421,6 +449,20 @@ static inline unsigned long cpufreq_scale(unsigned long old, u_int div,
 /*********************************************************************
  *                          CPUFREQ GOVERNORS                        *
  *********************************************************************/
+
+/* Govinfo Notifiers */
+#define CPUFREQ_LOAD_CHANGE		(0)
+
+/*
+ * Governor specific info that can be passed to modules that subscribe
+ * to CPUFREQ_GOVINFO_NOTIFIER
+ */
+struct cpufreq_govinfo {
+	unsigned int cpu;
+	unsigned int load;
+	unsigned int sampling_rate_us;
+};
+extern struct atomic_notifier_head cpufreq_govinfo_notifier_list;
 
 /*
  * If (cpufreq_driver->target) exists, the ->governor decides what frequency
@@ -580,6 +622,8 @@ ssize_t cpufreq_show_cpus(const struct cpumask *mask, char *buf);
 int cpufreq_boost_trigger_state(int state);
 int cpufreq_boost_supported(void);
 int cpufreq_boost_enabled(void);
+int cpufreq_enable_boost_support(void);
+bool policy_has_boost_freq(struct cpufreq_policy *policy);
 #else
 static inline int cpufreq_boost_trigger_state(int state)
 {
@@ -593,9 +637,19 @@ static inline int cpufreq_boost_enabled(void)
 {
 	return 0;
 }
+static inline int cpufreq_enable_boost_support(void)
+{
+	return -EINVAL;
+}
+
+static inline bool policy_has_boost_freq(struct cpufreq_policy *policy)
+{
+	return false;
+}
 #endif
 /* the following funtion is for cpufreq core use only */
 struct cpufreq_frequency_table *cpufreq_frequency_get_table(unsigned int cpu);
+struct cpufreq_frequency_table *cpufreq_get_info_table(unsigned int cpu);
 
 /* the following are really really optional */
 extern struct freq_attr cpufreq_freq_attr_scaling_available_freqs;
@@ -614,4 +668,7 @@ int cpufreq_generic_init(struct cpufreq_policy *policy,
 
 void acct_update_power(struct task_struct *p, cputime_t cputime);
 
+struct sched_domain;
+unsigned long cpufreq_scale_freq_capacity(struct sched_domain *sd, int cpu);
+unsigned long cpufreq_scale_max_freq_capacity(int cpu);
 #endif /* _LINUX_CPUFREQ_H */

@@ -808,6 +808,7 @@ struct decon_device {
 	bool				fst_frame;
 #endif
 	bool				fb_reservation;
+	atomic_t			ffu_flag;
 };
 
 static inline struct decon_device *get_decon_drvdata(u32 id)

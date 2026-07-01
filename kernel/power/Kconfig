@@ -117,6 +117,9 @@ config PM_SLEEP
 	def_bool y
 	depends on SUSPEND || HIBERNATE_CALLBACKS
 
+config SUSPEND_NVS
+	def_bool y
+
 config PM_SLEEP_SMP
 	def_bool y
 	depends on SMP
@@ -150,6 +153,18 @@ config PM_WAKELOCKS_GC
 	bool "Garbage collector for user space wakeup sources"
 	depends on PM_WAKELOCKS
 	default y
+
+config PM_WAKELOCKS_SENSOR_IND_HACK
+	bool "Poor timeout hack for stuck sensor_ind wakelock"
+	depends on PM_WAKELOCKS
+	default n
+	---help---
+	Adds a very poor hack that converts the sensor_ind wakelock
+	to a timed one on-the-fly. This is unfortunately necessary
+	for broken DSP firmwares on old devices, combined with
+	proprietary sensor binaries which don't account for that.
+	To mitigate this issue, this configuration option applies
+	a 5 seconds timeout to this wakelock.
 
 config PM_RUNTIME
 	bool "Run-time PM core functionality"
@@ -338,14 +353,6 @@ config SUSPEND_TIME
 	  Prints the time spent in suspend in the kernel log, and
 	  keeps statistics on the time spent in suspend in
 	  /sys/kernel/debug/suspend_time
-     
-
-config FOTA_LIMIT
-	bool "Fota limit information node"
-	default n
-	help
-	  Add sysfs to notify limit information to recovery module
-	  /sys/power/fota_limit
 
 config	BOEFFLA_WL_BLOCKER
 	bool "Boeffla generic wakelock blocker driver"
@@ -364,4 +371,3 @@ config QUICK_WAKEUP
 	---help---
 	  Allow kernel driver to do periodic jobs without resuming the full system
 	  This option can increase battery life on android powered smartphone.
-

@@ -2431,6 +2431,7 @@ static int do_add_mount(struct mount *newmnt, struct path *path, int mnt_flags)
 		goto unlock;
 
 	err = -EINVAL;
+
 #ifdef CONFIG_RKP_NS_PROT
 	if (d_is_symlink(newmnt->mnt->mnt_root))
 #else
@@ -2765,9 +2766,9 @@ long do_mount(const char *dev_name, const char __user *dir_name,
 	if (retval)
 		goto dput_out;
 
-	/* Default to relatime unless overriden */
-	if (!(flags & MS_NOATIME))
-		mnt_flags |= MNT_RELATIME;
+	/* Default to noatime unless overriden */
+	if (!(flags & MS_RELATIME))
+		mnt_flags |= MNT_NOATIME;
 
 	/* Separate the per-mountpoint flags */
 	if (flags & MS_NOSUID)
