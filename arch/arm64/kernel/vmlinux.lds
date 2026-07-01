@@ -1,7 +1,7 @@
 /*
  *
  * Automatically generated file; DO NOT EDIT.
- * Linux/arm64 3.18.91 Kernel Configuration
+ * Linux/arm64 3.18.140 Kernel Configuration
  *
  */
 /*
@@ -258,6 +258,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+/* const.h: Macros for dealing with constants.  */
+/* Some constant macros are used in both assembler and
+ * C code.  Therefore we cannot annotate them always with
+ * 'UL' and other type specifiers unilaterally.  We
+ * use the following macros to deal with this.
+ *
+ * Similarly, _AT() will cast an expression with a type in C, but
+ * leave it unchanged in asm.
+ */
 /* PAGE_SHIFT determines the page size */
 /* CONT_SHIFT determines the number of pages which can be tracked together  */
 /*
@@ -401,14 +410,6 @@
  */
 /* Ignore/forbid kprobes attach on very low level functions marked by this attribute: */
 /* const.h: Macros for dealing with constants.  */
-/* Some constant macros are used in both assembler and
- * C code.  Therefore we cannot annotate them always with
- * 'UL' and other type specifiers unilaterally.  We
- * use the following macros to deal with this.
- *
- * Similarly, _AT() will cast an expression with a type in C, but
- * leave it unchanged in asm.
- */
 /*
  * int-ll64 is used everywhere now.
  */
@@ -466,6 +467,7 @@
  * PAGE_OFFSET - the virtual address of the start of the kernel image (top
  *		 (VA_BITS - 1))
  * VA_BITS - the maximum number of bits for virtual addresses.
+ * VA_START - the first kernel virtual address.
  * TASK_SIZE - the maximum size of a user space task.
  * TASK_UNMAPPED_BASE - the lower boundary of the mmap VM area.
  * The module space lives between the addresses given by TASK_SIZE
@@ -709,7 +711,7 @@ SECTIONS
   *(.discard)
   *(.discard.*)
  }
- . = (0xffffffffffffffff << ((39) - 1)) + 0x00080000;
+ . = (0xffffffffffffffff - (1 << ((39) - 1)) + 1) + 0x00080000;
  .head.text : {
   _text = .;
   *(.head.text)
@@ -792,4 +794,4 @@ ASSERT(((__hyp_idmap_text_start + (1 << 12)) > __hyp_idmap_text_end),
 /*
  * If padding is applied before .head.text, virt<->phys conversions will fail.
  */
-ASSERT(_text == ((0xffffffffffffffff << ((39) - 1)) + 0x00080000), "HEAD is misaligned")
+ASSERT(_text == ((0xffffffffffffffff - (1 << ((39) - 1)) + 1) + 0x00080000), "HEAD is misaligned")

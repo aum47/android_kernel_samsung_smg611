@@ -1,7 +1,7 @@
 /*
  *
  * Automatically generated file; DO NOT EDIT.
- * Linux/arm64 3.18.91 Kernel Configuration
+ * Linux/arm64 3.18.140 Kernel Configuration
  *
  */
 /*
@@ -83,6 +83,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+/* const.h: Macros for dealing with constants.  */
 /* PAGE_SHIFT determines the page size */
 /* CONT_SHIFT determines the number of pages which can be tracked together  */
 /*
