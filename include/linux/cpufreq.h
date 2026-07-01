@@ -404,12 +404,6 @@ void cpufreq_freq_transition_end(struct cpufreq_policy *policy,
  * Governor specific info that can be passed to modules that subscribe
  * to CPUFREQ_GOVINFO_NOTIFIER
  */
-struct cpufreq_govinfo {
-	unsigned int cpu;
-	unsigned int load;
-	unsigned int sampling_rate_us;
-};
-extern struct atomic_notifier_head cpufreq_govinfo_notifier_list;
 
 void cpufreq_notify_utilization(struct cpufreq_policy *policy,
 		unsigned int load);
