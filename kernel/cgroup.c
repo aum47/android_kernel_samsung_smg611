@@ -1144,6 +1144,14 @@ static void cgroup_rm_file(struct cgroup *cgrp, const struct cftype *cft)
 
 	lockdep_assert_held(&cgroup_mutex);
 	kernfs_remove_by_name(cgrp->kn, cgroup_file_name(cgrp, cft, name));
+
+	/* drop the compat symlink created by cgroup_add_file() */
+	if (cft->ss && (cgrp->root->flags & CGRP_ROOT_NOPREFIX) &&
+	    !(cft->flags & CFTYPE_NO_PREFIX)) {
+		snprintf(name, CGROUP_FILE_NAME_MAX, "%s.%s",
+			 cft->ss->name, cft->name);
+		kernfs_remove_by_name(cgrp->kn, name);
+	}
 }
 
 /**
@@ -3025,6 +3033,18 @@ static int cgroup_add_file(struct cgroup *cgrp, struct cftype *cft)
 
 	if (cft->seq_show == cgroup_populated_show)
 		cgrp->populated_kn = kn;
+
+	/*
+	 * With "noprefix", also expose the prefixed name ("<subsys>.<name>")
+	 * as a symlink to the unprefixed file, for Droidspaces/LXC.
+	 */
+	if (cft->ss && (cgrp->root->flags & CGRP_ROOT_NOPREFIX) &&
+	    !(cft->flags & CFTYPE_NO_PREFIX)) {
+		snprintf(name, CGROUP_FILE_NAME_MAX, "%s.%s",
+			 cft->ss->name, cft->name);
+		kernfs_create_link(cgrp->kn, name, kn);
+	}
+
 	return 0;
 }
 
